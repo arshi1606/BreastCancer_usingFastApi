@@ -18,18 +18,36 @@ const ModelPage: React.FC = () => {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Check file name for "screenshot" (case-insensitive)
+      if (file.name.toLowerCase().includes("screenshot")) {
+        setErrorMessage("Screenshots are not accepted. Please upload a valid image.");
+        return;
+      }
+      
+      // Limit file types to JPEG and PNG.
+      if (!["image/jpeg", "image/png"].includes(file.type)) {
+        setErrorMessage("Invalid file type. Only PNG and JPEG are allowed.");
+        return;
+      }
+      // Limit file size to 5 MB.
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        setErrorMessage("File size exceeds the 5 MB limit.");
+        return;
+      }
+
       setSelectedFile(file);
       setErrorMessage("");
       setPredictionResult(null);
 
-      // Create a preview URL for the selected file
+      // Create a preview URL for the selected file.
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewUrl(reader.result as string);
       };
       reader.readAsDataURL(file);
 
-      // Convert image to Base64 string using the provided helper function
+      // Convert image to Base64 string using the provided helper function.
       try {
         const base64Str = await imageToBase64Browser(file);
         setBase64Image(base64Str);
@@ -42,7 +60,7 @@ const ModelPage: React.FC = () => {
 
   const handlePredict = async () => {
     if (!base64Image) {
-      setErrorMessage("Please upload an image first.");
+      setErrorMessage("Please upload a valid image first.");
       return;
     }
     setLoading(true);
@@ -50,8 +68,7 @@ const ModelPage: React.FC = () => {
     setPredictionResult(null);
 
     try {
-      // Update the URL path if your FastAPI route is different.
-      const response = await fetch("https://3d82-34-169-186-124.ngrok-free.app/predict", {
+      const response = await fetch("https://8435-34-91-119-92.ngrok-free.app/breast_cancer/predict", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -74,49 +91,59 @@ const ModelPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-8">
-      <h1 className="text-4xl font-bold text-center mb-6">Model Prediction</h1>
-      <p className="text-center mb-4">Upload an image to get a prediction.</p>
-      
-      <div className="flex flex-col items-center">
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="mb-4"
-        />
+    <div className="min-h-screen bg-gradient-to-r from-purple-100 to-blue-100 flex flex-col items-center p-8">
+      <h1 className="text-5xl font-extrabold text-center mb-8 text-purple-900">
+        Model Prediction
+      </h1>
+      <p className="text-lg text-center mb-8 text-gray-700">
+        Upload an image to get a prediction. (Only PNG/JPEG under 5 MB are allowed. Screenshots are not accepted.)
+      </p>
 
-        {previewUrl && (
-          <div className="mb-4">
-            <img
-              src={previewUrl}
-              alt="Preview"
-              className="max-w-full max-h-96 rounded shadow-md"
-            />
-          </div>
-        )}
+      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-6">
+        <div className="flex flex-col items-center">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="mb-4 w-full text-gray-700"
+          />
 
-        {errorMessage && (
-          <div className="mb-4 text-red-600 font-semibold">
-            {errorMessage}
-          </div>
-        )}
+          {previewUrl && (
+            <div className="mb-4">
+              <img
+                src={previewUrl}
+                alt="Preview"
+                className="max-w-full max-h-72 rounded-lg border-2 border-gray-300 shadow-md"
+              />
+            </div>
+          )}
 
-        <button
-          onClick={handlePredict}
-          disabled={loading || !selectedFile}
-          className={`px-8 py-3 rounded bg-purple-600 text-white font-bold ${
-            loading || !selectedFile ? "opacity-50 cursor-not-allowed" : "hover:bg-purple-700"
-          }`}
-        >
-          {loading ? "Predicting..." : "Predict"}
-        </button>
+          {errorMessage && (
+            <div className="mb-4 text-red-600 font-semibold">
+              {errorMessage}
+            </div>
+          )}
+
+          <button
+            onClick={handlePredict}
+            disabled={loading || !selectedFile}
+            className={`w-full px-6 py-3 rounded-full bg-purple-600 text-white font-bold transition duration-300 ${
+              loading || !selectedFile
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:bg-purple-700"
+            }`}
+          >
+            {loading ? "Predicting..." : "Predict"}
+          </button>
+        </div>
       </div>
 
       {predictionResult && (
-        <div className="mt-8 bg-gray-100 p-6 rounded shadow-md">
-          <h2 className="text-2xl font-semibold mb-4">Prediction Result</h2>
-          <pre className="bg-white p-4 rounded shadow overflow-auto">
+        <div className="mt-8 w-full max-w-3xl bg-gray-200 p-6 rounded-lg shadow-lg">
+          <h2 className="text-3xl font-semibold mb-4 text-gray-800">
+            Prediction Result
+          </h2>
+          <pre className="bg-white p-4 rounded shadow overflow-auto text-gray-800">
             {JSON.stringify(predictionResult, null, 2)}
           </pre>
         </div>
