@@ -68,7 +68,7 @@ const ModelPage: React.FC = () => {
     setPredictionResult(null);
 
     try {
-      const response = await fetch("https://8435-34-91-119-92.ngrok-free.app/breast_cancer/predict", {
+      const response = await fetch("https://arshi1606-breast-cancer-detection-model.hf.space/breast_cancer/predict", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
